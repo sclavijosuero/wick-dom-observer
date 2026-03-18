@@ -64,7 +64,7 @@ The `config` argument is mandatory for both `clickAndWatchForElement` and `watch
 
 #### Timeline view
 
-![clickAndWatchForElement timeout timeline](assets/timeline.png)
+![clickAndWatchForElement timeout timeline](assets/timelines.png)
 
 The timeline above maps how timeout values are consumed during the command flow:
 
