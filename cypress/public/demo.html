@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>clickSpinner test page</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --bg-card: rgba(15, 23, 42, 0.88);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --primary: #6366f1;
+      --primary-2: #8b5cf6;
+      --accent: #22d3ee;
+      --ring: rgba(99, 102, 241, 0.45);
+      --border: rgba(148, 163, 184, 0.2);
+      --shadow: 0 10px 30px rgba(2, 6, 23, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 20%, rgba(34, 211, 238, 0.12), transparent 35%),
+        radial-gradient(circle at 90% 15%, rgba(139, 92, 246, 0.16), transparent 38%),
+        linear-gradient(160deg, #020617, #0f172a 55%, #111827);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .page-grid {
+      width: min(1080px, 100%);
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      align-items: start;
+    }
+
+    .panel {
+      width: min(820px, 100%);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(6px);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 20px 24px 10px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.09), transparent);
+    }
+
+    .title {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.93rem;
+    }
+
+    .panel-body {
+      padding: 22px 30px 24px;
+      display: grid;
+      gap: 16px;
+    }
+
+    #spinnerPlaygroundBody {
+      position: relative;
+    }
+
+    .controls-group {
+      display: grid;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .button-row {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    button {
+      border: 1px solid transparent;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 10px 14px;
+      color: #f8fafc;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+      box-shadow: 0 8px 18px rgba(79, 70, 229, 0.35);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 20px rgba(79, 70, 229, 0.4);
+    }
+
+    button:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--ring), 0 12px 20px rgba(79, 70, 229, 0.4);
+    }
+
+    #spinnerBtn5 {
+      background: linear-gradient(135deg, rgba(6, 95, 70, 0.95), rgba(22, 163, 74, 0.95));
+    }
+
+    #spinnerBtn5.is-loading {
+      background: linear-gradient(135deg, rgba(153, 27, 27, 0.95), rgba(220, 38, 38, 0.95));
+    }
+
+    #spinnerBtn6,
+    #toastBtn3 {
+      background: linear-gradient(135deg, #334155, #1f2937);
+      box-shadow: 0 8px 18px rgba(31, 41, 55, 0.4);
+    }
+
+    #toastBtn1 {
+      box-shadow: 0 8px 18px rgba(6, 78, 59, 0.55);
+    }
+
+    .canvas-wrap {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(2, 6, 23, 0.4);
+      padding: 12px;
+      width: fit-content;
+    }
+
+    #spinnerCanvas,
+    #toastCanvas {
+      display: block;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background:
+        linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(99, 102, 241, 0.16)),
+        #0f172a;
+    }
+
+    .hint {
+      margin: 0;
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+
+    .spinner-layer {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 46px;
+      align-items: flex-start;
+      pointer-events: none;
+    }
+
+    .toast-layer {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 46px;
+      align-items: flex-end;
+      pointer-events: none;
+    }
+
+    .spinner {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(251, 191, 36, 0.75);
+      color: #fff7ed;
+      background: linear-gradient(135deg, rgba(120, 53, 15, 0.95), rgba(194, 65, 12, 0.95));
+      box-shadow: 0 10px 24px rgba(194, 65, 12, 0.45);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .spinner.spinner-removed {
+      color: #111827;
+      border-color: rgba(250, 204, 21, 0.9);
+      background: linear-gradient(135deg, rgba(250, 204, 21, 0.95), rgba(234, 179, 8, 0.95));
+      box-shadow: 0 10px 24px rgba(234, 179, 8, 0.45);
+    }
+
+    .spinner.spinner-removed::before {
+      border: 2px solid rgba(17, 24, 39, 0.25);
+      border-top-color: #111827;
+    }
+
+    .spinner.spinner-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      justify-content: center;
+      align-items: center;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      text-indent: -9999px;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 40;
+    }
+
+    .spinner.spinner-overlay::before {
+      width: 130px;
+      height: 130px;
+      border: 0;
+      background: conic-gradient(
+        from 0deg,
+        rgba(250, 204, 21, 0.14) 0deg,
+        rgba(250, 204, 21, 0.24) 140deg,
+        #fde047 250deg,
+        #f59e0b 320deg,
+        rgba(250, 204, 21, 0.14) 360deg
+      );
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px));
+      animation: spin 900ms linear infinite;
+    }
+
+    .spinner.spinner-spokes-orange {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      padding: 0;
+      gap: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      color: transparent;
+      text-indent: -9999px;
+      overflow: visible;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 35;
+      pointer-events: none;
+    }
+
+    .spinner.spinner-spokes-orange::before {
+      content: "";
+      position: relative;
+      width: 220px;
+      height: 220px;
+      border-radius: 999px;
+      background: repeating-conic-gradient(
+        from -90deg,
+        rgba(251, 146, 60, 1) 0deg 16deg,
+        rgba(234, 88, 12, 0.22) 16deg 30deg
+      );
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 20px), #000 calc(100% - 19px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 20px), #000 calc(100% - 19px));
+      animation: spin 900ms linear infinite;
+    }
+
+    .spinner.spinner-inline {
+      padding: 4px 10px;
+      font-size: 0.82rem;
+      box-shadow: none;
+      border-color: rgba(251, 191, 36, 0.55);
+      min-width: auto;
+    }
+
+    .button-inline-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 2px solid rgba(255, 255, 255, 0.45);
+      border-top-color: #ffffff;
+      animation: spin 700ms linear infinite;
+      flex: 0 0 auto;
+    }
+
+    .toast {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(110, 231, 183, 0.75);
+      color: #ecfdf5;
+      background: linear-gradient(135deg, rgba(6, 95, 70, 0.95), rgba(22, 163, 74, 0.95));
+      box-shadow: 0 10px 24px rgba(22, 163, 74, 0.45);
+      font-size: 0.95rem;
+      font-weight: 700;
+      min-width: 220px;
+      justify-content: space-between;
+      pointer-events: auto;
+      transform-origin: right center;
+      animation: toastIn 220ms ease-out;
+    }
+
+    .toast[data-from="toastBtn1"] {
+      box-shadow: 0 10px 24px rgba(6, 78, 59, 0.55);
+    }
+
+    .toast::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #86efac;
+      box-shadow: 0 0 0 2px rgba(134, 239, 172, 0.2);
+      flex: 0 0 auto;
+    }
+
+    .toast-message {
+      flex: 1 1 auto;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toast-close {
+      margin-left: 8px;
+      border: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: rgba(6, 78, 59, 0.8);
+      color: #ecfdf5;
+      font-size: 14px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: none;
+      padding: 0;
+    }
+
+    .toast-close:hover {
+      transform: none;
+      box-shadow: none;
+      background: rgba(6, 78, 59, 1);
+    }
+
+    .toast-close:focus-visible {
+      box-shadow: 0 0 0 2px rgba(110, 231, 183, 0.5);
+    }
+
+    .toast-closing {
+      animation: toastOut 180ms ease-in forwards;
+    }
+
+    .toast-hidden {
+      display: none;
+    }
+
+    .spinner::before {
+      content: "";
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      border: 2px solid rgba(255, 237, 213, 0.45);
+      border-top-color: #fde68a;
+      animation: spin 700ms linear infinite;
+      flex: 0 0 auto;
+    }
+
+    .loading {
+      opacity: 1;
+    }
+
+    .spinner-hidden {
+      position: absolute;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-4px);
+      transition: opacity 180ms ease, transform 180ms ease;
+      pointer-events: none;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateX(30px) scaleX(0.8);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0) scaleX(1);
+      }
+    }
+
+    @keyframes toastOut {
+      from {
+        opacity: 1;
+        transform: translateX(0) scaleX(1);
+      }
+
+      to {
+        opacity: 0;
+        transform: translateX(24px) scaleX(0.86);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page-grid">
+    <main class="panel">
+      <header class="panel-header">
+        <h1 class="title">Spinner Playground</h1>
+        <p class="subtitle">Use these controls for <code>clickAndWatchForElement()</code> tests</p>
+      </header>
+
+      <section class="panel-body" id="spinnerPlaygroundBody">
+        <div class="controls-group">
+          <div class="button-row">
+            <button id="spinnerBtn1">Spinner shows after 1000ms - removed after 1100ms</button>
+            <button id="spinnerBtn2">Spinner shows immediatelly - removed after 5500ms</button>
+            <button id="spinnerBtn3">Spinner shows after 500ms - hidden after 3500ms</button>
+            <button id="spinnerBtn4">Spinner shows immediatelly - hidden after 1500ms</button>
+            <button id="spinnerBtn5">Spinner shows INSIDE BUTTON inmediatelly - text restored after 1500ms</button>
+            <button id="spinnerBtn6">No spinner</button>
+          </div>
+
+          <div class="canvas-wrap">
+            <canvas id="spinnerCanvas" width="390" height="100"></canvas>
+          </div>
+        </div>
+
+        <div class="spinner-layer" aria-live="polite">
+          <div class="spinner-persistent spinner-hidden" data-from="spinnerBtn4" aria-hidden="true">Waiting</div>
+        </div>
+        <div class="spinner-persistent spinner-spokes-orange spinner-hidden" data-from="spinnerBtn3" aria-hidden="true">Loading</div>
+
+        <p class="hint">Save/Slow/Canvas show a temporary spinner. Hide Spinner becomes hidden. Inline Spinner replaces button text. NoSpinner does nothing.</p>
+      </section>
+    </main>
+
+    <main class="panel">
+      <header class="panel-header">
+        <h1 class="title">Toast Playground</h1>
+        <p class="subtitle">Use these controls for <code>clickAndWatchForElement()</code> tests</p>
+      </header>
+
+      <section class="panel-body">
+        <div class="controls-group">
+          <div class="button-row">
+            <button id="toastBtn1">Toast shows after 1500ms - removed after 1000ms</button>
+            <button id="toastBtn2">Toast shows immediatelly - hidden after 3000ms</button>
+            <button id="toastBtn3">No toast</button>
+          </div>
+
+          <div class="canvas-wrap">
+            <canvas id="toastCanvas" width="390" height="100"></canvas>
+          </div>
+        </div>
+
+        <div class="toast-layer" aria-live="polite">
+          <div class="toast toast-persistent toast-hidden" data-from="toastBtn2" aria-hidden="true">
+            <span class="toast-message">Toast shows immediatelly - hidden after 3000ms</span>
+            <button class="toast-close" type="button" aria-label="Close toast">×</button>
+          </div>
+          <div class="toast toast-persistent toast-hidden" data-from="toastCanvas" aria-hidden="true">
+            <span class="toast-message">Toast shows after 1000ms - removed after 110ms</span>
+            <button class="toast-close" type="button" aria-label="Close toast">×</button>
+          </div>
+        </div>
+
+        <p class="hint">Save/Slow/Canvas show a green toast that expands from the right and auto-dismisses (available X icon to close). No toast does nothing.</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      function addSpinner(id, lifetime, delay = 0, hideInsteadOfRemove = false) {
+        lifetime = lifetime !== undefined ? lifetime : 120
+        var layer = document.querySelector('.spinner-layer')
+        var spinnerPlayground = document.getElementById('spinnerPlaygroundBody') || layer
+
+        var startSpinner = function () {
+          if (hideInsteadOfRemove) {
+            var persistent = spinnerPlayground.querySelector('.spinner-persistent[data-from="' + id + '"]')
+            if (!persistent) {
+              persistent = document.createElement('div')
+              persistent.className = 'spinner-persistent spinner-hidden'
+              persistent.setAttribute('data-from', id)
+              persistent.setAttribute('aria-hidden', 'true')
+              persistent.textContent = id === 'spinnerBtn4' ? 'Waiting' : 'Loading'
+              if (id === 'spinnerBtn3') {
+                persistent.classList.add('spinner-spokes-orange')
+                spinnerPlayground.appendChild(persistent)
+              } else {
+                layer.appendChild(persistent)
+              }
+            }
+
+            if (persistent._hideTimer) {
+              clearTimeout(persistent._hideTimer)
+              persistent._hideTimer = null
+            }
+
+            if (id === 'spinnerBtn3') {
+              persistent.classList.add('spinner-spokes-orange')
+            }
+
+            persistent.classList.add('spinner')
+            persistent.classList.remove('spinner-hidden')
+            persistent.classList.add('loading')
+            persistent.setAttribute('aria-hidden', 'false')
+            persistent._hideTimer = setTimeout(function () {
+              persistent.classList.add('spinner-hidden')
+              persistent.classList.remove('spinner')
+              persistent.classList.remove('loading')
+              persistent.setAttribute('aria-hidden', 'true')
+            }, lifetime)
+            return
+          }
+
+          var created = document.createElement('div')
+          created.className = 'spinner spinner-removed loading'
+          var targetLayer = layer
+          if (id === 'spinnerBtn2') {
+            created.classList.add('spinner-overlay')
+            targetLayer = document.getElementById('spinnerPlaygroundBody') || layer
+          }
+          created.setAttribute('data-from', id)
+          created.textContent = 'Loading'
+          targetLayer.appendChild(created)
+          setTimeout(function () { created.remove() }, lifetime)
+        }
+
+        if (delay > 0) {
+          setTimeout(startSpinner, delay)
+          return
+        }
+
+        startSpinner()
+      }
+
+      function wireToastClose(el) {
+        if (!el || el._closeWired) return
+        var closeBtn = el.querySelector('.toast-close')
+        if (!closeBtn) return
+        closeBtn.addEventListener('click', function () {
+          dismissToast(el, el.classList.contains('toast-persistent'))
+        })
+        el._closeWired = true
+      }
+
+      function addToast(id, message, lifetime, delay, reuseExisting) {
+        lifetime = lifetime !== undefined ? lifetime : 3200
+        delay = delay !== undefined ? delay : 0
+        reuseExisting = reuseExisting !== undefined ? reuseExisting : false
+        var layer = document.querySelector('.toast-layer')
+
+        var el = null
+        if (reuseExisting) {
+          el = layer.querySelector('.toast-persistent[data-from="' + id + '"]')
+          if (!el) return
+          var msgEl = el.querySelector('.toast-message')
+          if (msgEl) {
+            msgEl.textContent = message || 'Success'
+          }
+          wireToastClose(el)
+        } else {
+          var stale = layer.querySelectorAll('.toast[data-from="' + id + '"]:not(.toast-persistent)')
+          stale.forEach(function (node) { node.remove() })
+
+          el = document.createElement('div')
+          el.className = 'toast'
+          el.setAttribute('data-from', id)
+
+          var msg = document.createElement('span')
+          msg.className = 'toast-message'
+          msg.textContent = message || 'Success'
+
+          var closeBtn = document.createElement('button')
+          closeBtn.className = 'toast-close'
+          closeBtn.setAttribute('type', 'button')
+          closeBtn.setAttribute('aria-label', 'Close toast')
+          closeBtn.textContent = '×'
+
+          el.appendChild(msg)
+          el.appendChild(closeBtn)
+          wireToastClose(el)
+        }
+
+        var showToast = function () {
+          if (el._hideTimer) {
+            clearTimeout(el._hideTimer)
+            el._hideTimer = null
+          }
+          el.classList.remove('toast-hidden')
+          el.classList.remove('toast-closing')
+          el.setAttribute('aria-hidden', 'false')
+          if (!el.parentNode) {
+            layer.appendChild(el)
+          }
+          el._dismissTimer = setTimeout(function () {
+            dismissToast(el, reuseExisting)
+          }, lifetime)
+        }
+
+        if (delay > 0) {
+          if (el._showTimer) {
+            clearTimeout(el._showTimer)
+            el._showTimer = null
+          }
+          el._showTimer = setTimeout(showToast, delay)
+          return
+        }
+
+        showToast()
+      }
+
+      function removeToastNode(el) {
+        if (!el) return
+        if (el._removeTimer) {
+          clearTimeout(el._removeTimer)
+          el._removeTimer = null
+        }
+        if (el.isConnected) {
+          el.remove()
+        }
+      }
+
+      function dismissToast(el, keepInDom) {
+        if (!el) return
+        var retractMs = 180
+        keepInDom = keepInDom !== undefined ? keepInDom : false
+        if (el._showTimer) {
+          clearTimeout(el._showTimer)
+          el._showTimer = null
+        }
+        if (el._dismissTimer) {
+          clearTimeout(el._dismissTimer)
+          el._dismissTimer = null
+        }
+        if (el._hideTimer) {
+          clearTimeout(el._hideTimer)
+          el._hideTimer = null
+        }
+        if (el.classList.contains('toast-closing')) {
+          if (!keepInDom && !el._removeTimer) {
+            el._removeTimer = setTimeout(function () {
+              removeToastNode(el)
+            }, 180)
+          }
+          return
+        }
+        el.classList.add('toast-closing')
+        if (keepInDom) {
+          el._hideTimer = setTimeout(function () {
+            el.classList.add('toast-hidden')
+            el.classList.remove('toast-closing')
+            el.setAttribute('aria-hidden', 'true')
+          }, retractMs)
+          return
+        }
+        var handledByAnimation = false
+        var onAnimationEnd = function () {
+          handledByAnimation = true
+          el.removeEventListener('animationend', onAnimationEnd)
+          removeToastNode(el)
+        }
+        el.addEventListener('animationend', onAnimationEnd)
+        el._removeTimer = setTimeout(function () {
+          if (!handledByAnimation) {
+            el.removeEventListener('animationend', onAnimationEnd)
+          }
+          removeToastNode(el)
+        }, retractMs + 30)
+      }
+
+      function showInlineSpinnerInButton(buttonId, lifetime, delay) {
+        var button = document.getElementById(buttonId)
+        if (!button) return
+
+        var visibleFor = lifetime !== undefined ? lifetime : 1200
+        var waitBeforeShow = delay !== undefined ? delay : 0
+        var originalText = button.getAttribute('data-original-text') || button.textContent
+        button.setAttribute('data-original-text', originalText)
+
+        setTimeout(function () {
+          var spinnerEl = document.createElement('span')
+          spinnerEl.className = 'button-inline-spinner'
+          spinnerEl.setAttribute('data-from', buttonId)
+          spinnerEl.setAttribute('aria-hidden', 'true')
+          var buttonRect = button.getBoundingClientRect()
+          button.style.width = buttonRect.width + 'px'
+          button.style.height = buttonRect.height + 'px'
+
+          button.classList.add('is-loading')
+          button.textContent = ''
+          button.appendChild(spinnerEl)
+
+          setTimeout(function () {
+            spinnerEl.remove()
+            button.textContent = originalText
+            button.classList.remove('is-loading')
+            button.style.width = ''
+            button.style.height = ''
+          }, visibleFor)
+        }, waitBeforeShow)
+      }
+
+      // SPINNERS EXAMPLES
+      // ------------------------------------------------------------
+
+      // Spinner after 1000ms - removed after 1100ms
+      document.getElementById('spinnerBtn1').addEventListener('click', function () {
+        addSpinner('spinnerBtn1', 1100, 1000)
+      })
+
+      // Spinner immediatelly - removed after 6000ms
+      document.getElementById('spinnerBtn2').addEventListener('click', function () {
+        addSpinner('spinnerBtn2', 5500)
+      })
+
+      // Spinner after 500ms - hidden after 3500ms
+      document.getElementById('spinnerBtn3').addEventListener('click', function () {
+        addSpinner('spinnerBtn3', 3500, 500, true)
+      })
+
+      // Spinner immediately - hidden after 1500ms
+      document.getElementById('spinnerBtn4').addEventListener('click', function () {
+        addSpinner('spinnerBtn4', 1500, 0, true)
+      })
+
+      // Spinner inside button immediately - text restored after 1500ms.
+      document.getElementById('spinnerBtn5').addEventListener('click', function () {
+        showInlineSpinnerInButton('spinnerBtn5', 1300, 0)
+      })
+
+      // No spinner intentionally
+      document.getElementById('spinnerBtn6').addEventListener('click', function () { })
+
+      // Spinner shows immediatelly and then removed after 20ms
+      document.getElementById('spinnerCanvas').addEventListener('click', function () {
+        addSpinner('spinnerCanvas', 20)
+      })
+
+      // TOASTS EXAMPLES
+      // ------------------------------------------------------------
+
+      // Toast after 1500ms - removed after 1000ms
+      document.getElementById('toastBtn1').addEventListener('click', function () {
+        addToast('toastBtn1', 'Toast after 1500ms - removed after 1000ms', 1000, 1500, false)
+      })
+
+      // Spinner immediately - hidden after 1500ms
+      document.getElementById('toastBtn2').addEventListener('click', function () {
+        addToast('toastBtn2', 'Toast immediatelly - hidden after 3000ms', 3000, 0, true)
+      })
+
+      // No toast intentionally
+      document.getElementById('toastBtn3').addEventListener('click', function () { })
+
+      // Toast shows after 30ms and then hidden after 110ms
+      document.getElementById('toastCanvas').addEventListener('click', function () {
+        addToast('toastCanvas', 'Toast after 30ms - hidden after 110ms', 110, 30, true)
+      })
+
+      function paintCanvasHint(canvasId, text) {
+        var canvas = document.getElementById(canvasId)
+        var ctx = canvas.getContext('2d')
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.fillStyle = '#1e2b4a'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.fillStyle = '#f8fafc'
+        ctx.font = '700 12px Segoe UI, Arial, sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'top'
+        ctx.strokeStyle = 'rgba(15, 23, 42, 0.7)'
+        ctx.lineWidth = 2
+        var words = String(text || '').split(' ')
+        var lines = []
+        var currentLine = words[0] || ''
+        var maxWidth = canvas.width - 20
+        var lineHeight = 16
+
+        for (var i = 1; i < words.length; i += 1) {
+          var candidate = currentLine + ' ' + words[i]
+          if (ctx.measureText(candidate).width <= maxWidth) {
+            currentLine = candidate
+          } else {
+            lines.push(currentLine)
+            currentLine = words[i]
+          }
+        }
+        lines.push(currentLine)
+
+        var totalHeight = lines.length * lineHeight
+        var startY = (canvas.height - totalHeight) / 2
+
+        for (var j = 0; j < lines.length; j += 1) {
+          var y = startY + j * lineHeight
+          ctx.strokeText(lines[j], canvas.width / 2, y)
+          ctx.fillText(lines[j], canvas.width / 2, y)
+        }
+      }
+
+      function syncSpinnerButtonWidths() {
+        var referenceBtn = document.getElementById('spinnerBtn2')
+        var targetBtn = document.getElementById('spinnerBtn5')
+        if (!referenceBtn || !targetBtn) return
+        targetBtn.style.width = referenceBtn.getBoundingClientRect().width + 'px'
+      }
+
+      paintCanvasHint('spinnerCanvas', 'Spinner shows immediatelly - removed after 20ms (Canvas)')
+      paintCanvasHint('toastCanvas', 'Toast shows after 30ms - hidden after 110ms (Canvas)')
+      syncSpinnerButtonWidths()
+      window.addEventListener('resize', syncSpinnerButtonWidths)
+    })()
+  </script>
+</body>
+
+</html>

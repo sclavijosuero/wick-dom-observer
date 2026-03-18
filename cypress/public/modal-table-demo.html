@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modal + Loading Table Demo</title>
+  <style>
+    :root {
+      --bg-a: #0f172a;
+      --bg-b: #111827;
+      --card: rgba(15, 23, 42, 0.86);
+      --line: rgba(148, 163, 184, 0.24);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --primary-a: #0ea5e9;
+      --primary-b: #6366f1;
+      --success-a: #059669;
+      --success-b: #16a34a;
+      --shadow: 0 14px 40px rgba(2, 6, 23, 0.55);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(14, 165, 233, 0.16), transparent 35%),
+        radial-gradient(circle at 85% 5%, rgba(99, 102, 241, 0.18), transparent 40%),
+        linear-gradient(170deg, var(--bg-a), var(--bg-b));
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(1080px, 100%);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(6px);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 20px 24px 14px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.12), transparent);
+    }
+
+    .title {
+      margin: 0;
+      font-size: 1.26rem;
+      font-weight: 750;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .content {
+      padding: 22px 24px 24px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .cta {
+      border: 1px solid transparent;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #eff6ff;
+      padding: 11px 16px;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--primary-a), var(--primary-b));
+      box-shadow: 0 10px 24px rgba(59, 130, 246, 0.35);
+      transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+    }
+
+    .cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 13px 28px rgba(59, 130, 246, 0.42);
+    }
+
+    .cta:disabled {
+      opacity: 0.72;
+      cursor: default;
+      transform: none;
+      box-shadow: 0 8px 16px rgba(59, 130, 246, 0.2);
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    .loading-row {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .spinner-image {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 4px solid rgba(148, 163, 184, 0.28);
+      border-top-color: #38bdf8;
+      border-right-color: #6366f1;
+      animation: spin 760ms linear infinite;
+      filter: drop-shadow(0 4px 10px rgba(56, 189, 248, 0.25));
+    }
+
+    .loading-label {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #cbd5e1;
+    }
+
+    .table-wrap {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(2, 6, 23, 0.38);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      text-align: left;
+      font-size: 0.84rem;
+      letter-spacing: 0.4px;
+      color: #cbd5e1;
+      padding: 12px 14px;
+      background: rgba(30, 41, 59, 0.84);
+      border-bottom: 1px solid var(--line);
+    }
+
+    tbody td {
+      padding: 11px 14px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+      font-size: 0.91rem;
+      color: #e5e7eb;
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(30, 41, 59, 0.28);
+    }
+
+    tbody tr:hover {
+      background: rgba(56, 189, 248, 0.12);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Modal */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.66);
+      display: grid;
+      place-items: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    .modal {
+      width: min(560px, 100%);
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(160deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98));
+      box-shadow: 0 20px 48px rgba(2, 6, 23, 0.62);
+      overflow: hidden;
+      animation: riseIn 180ms ease-out;
+    }
+
+    .modal-head {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(14, 165, 233, 0.14), transparent);
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 750;
+      color: #e0f2fe;
+    }
+
+    .modal-body {
+      padding: 16px 18px;
+      color: #cbd5e1;
+      line-height: 1.52;
+      font-size: 0.94rem;
+    }
+
+    .modal-list {
+      margin: 10px 0 0;
+      padding-left: 18px;
+    }
+
+    .modal-actions {
+      padding: 0 18px 18px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .close-modal {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      color: #ecfdf5;
+      background: linear-gradient(135deg, var(--success-a), var(--success-b));
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(22, 163, 74, 0.35);
+    }
+
+    .close-modal.annoying-close {
+      background: linear-gradient(135deg, #dc2626, #f97316);
+      box-shadow: 0 8px 18px rgba(239, 68, 68, 0.35);
+    }
+
+    /* Keep ad-overlay modal behavior, but style like a top banner. */
+    #adOverlay {
+      place-items: start center;
+      padding: 14px 16px 24px;
+      background: rgba(2, 6, 23, 0.6);
+    }
+
+    #adOverlay .modal {
+      width: min(1040px, calc(100% - 10px));
+      border-radius: 14px;
+      border: 1px solid rgba(250, 204, 21, 0.68);
+      background:
+        repeating-linear-gradient(-45deg,
+          rgba(245, 158, 11, 0.16) 0 14px,
+          rgba(234, 88, 12, 0.16) 14px 28px),
+        linear-gradient(140deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.98));
+      box-shadow: 0 16px 36px rgba(2, 6, 23, 0.66);
+      animation: bannerDrop 220ms ease-out;
+    }
+
+    #adOverlay .modal-head {
+      padding: 12px 16px 10px;
+      background: linear-gradient(180deg, rgba(250, 204, 21, 0.2), transparent);
+      border-bottom: 1px solid rgba(250, 204, 21, 0.32);
+    }
+
+    #adOverlay .modal-title {
+      color: #fef3c7;
+      font-size: 1.1rem;
+      letter-spacing: 0.25px;
+    }
+
+    #adOverlay .modal-body {
+      padding: 12px 16px;
+      color: #fef9c3;
+    }
+
+    #adOverlay .modal-actions {
+      padding: 0 16px 14px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes riseIn {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes bannerDrop {
+      from {
+        opacity: 0;
+        transform: translateY(-18px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header class="header">
+      <h1 class="title">Campaign Data Loader</h1>
+      <p class="subtitle">
+        Click one button to load data. The second flow also triggers an annoying ad overlay.
+      </p>
+    </header>
+
+    <section class="content">
+      <div class="toolbar">
+        <button id="loadDataBtn" data-cy="load-data-btn" class="cta" type="button">Load Campaign Data Spinner</button>
+        <button id="loadDataWithAnnoyingModalBtn" data-cy="load-data-btn-annoying" class="cta" type="button">
+          Load Campaign Data Spinner &amp; Random Annoying Modal
+        </button>
+        <p id="statusText" class="status">Ready to load data.</p>
+      </div>
+
+      <div id="loadingRow" data-cy="loading-row" class="loading-row hidden" aria-live="polite">
+        <div class="spinner-image" data-cy="service-spinner"></div>
+        <p class="loading-label">Fetching latest campaign analytics...</p>
+      </div>
+
+      <div id="tableWrap" data-cy="table-wrap" class="table-wrap hidden">
+        <table>
+          <thead>
+            <tr>
+              <th>Campaign ID</th>
+              <th>Channel</th>
+              <th>Region</th>
+              <th>Daily Budget</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="resultRows" data-cy="result-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div id="adOverlay" data-cy="ad-overlay" class="overlay hidden" role="dialog" aria-modal="true"
+    aria-labelledby="adTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="adTitle" class="modal-title">Limited Offer: AI Insights Upgrade</h2>
+      </div>
+      <div class="modal-body">
+        Unlock deeper performance insights with premium analytics features:
+        <ul class="modal-list">
+          <li>Real-time anomaly detection for active campaigns.</li>
+          <li>Predictive recommendations for budget allocation.</li>
+          <li>Automated daily summaries delivered to your inbox.</li>
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <button id="closeAdBtn" data-cy="close-ad-btn" class="close-modal" type="button">Close and Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="annoyingOverlay" data-cy="annoying-overlay" class="overlay hidden" role="dialog" aria-modal="true"
+    aria-labelledby="annoyingTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="annoyingTitle" class="modal-title">BUY NOW!!! Extremely Annoying Ad Modal</h2>
+      </div>
+      <div class="modal-body">
+        This is a simulated intrusive ad while data is loading.
+        <ul class="modal-list">
+          <li>Flash offer ends in 00:09</li>
+          <li>New popups every minute</li>
+          <li>Autoplay videos with loud sound</li>
+        </ul>
+        You must close this panel explicitly to interact with the table behind it.
+      </div>
+      <div class="modal-actions">
+        <button id="closeAnnoyingBtn" data-cy="close-annoying-btn" class="close-modal annoying-close" type="button">
+          Close Annoying Ad
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var loadDataBtn = document.getElementById('loadDataBtn')
+      var loadDataWithAnnoyingModalBtn = document.getElementById('loadDataWithAnnoyingModalBtn')
+      var statusText = document.getElementById('statusText')
+      var loadingRow = document.getElementById('loadingRow')
+      var tableWrap = document.getElementById('tableWrap')
+      var resultRows = document.getElementById('resultRows')
+      var adOverlay = document.getElementById('adOverlay')
+      var closeAdBtn = document.getElementById('closeAdBtn')
+      var annoyingOverlay = document.getElementById('annoyingOverlay')
+      var closeAnnoyingBtn = document.getElementById('closeAnnoyingBtn')
+
+      function getMockRows() {
+        return [
+          ['CMP-1001', 'Search', 'North', '$1,450', 'Active'],
+          ['CMP-1002', 'Social', 'West', '$980', 'Active'],
+          ['CMP-1003', 'Display', 'South', '$730', 'Paused'],
+          ['CMP-1004', 'Email', 'East', '$420', 'Active'],
+          ['CMP-1005', 'Search', 'Global', '$1,960', 'Active'],
+          ['CMP-1006', 'Social', 'North', '$840', 'Draft'],
+          ['CMP-1007', 'Display', 'Central', '$610', 'Active'],
+          ['CMP-1008', 'Email', 'West', '$390', 'Paused'],
+          ['CMP-1009', 'Search', 'East', '$1,120', 'Active'],
+          ['CMP-1010', 'Social', 'South', '$890', 'Active'],
+        ]
+      }
+
+      function renderRows(rows) {
+        resultRows.innerHTML = ''
+        rows.forEach(function (cells) {
+          var tr = document.createElement('tr')
+          cells.forEach(function (value) {
+            var td = document.createElement('td')
+            td.textContent = value
+            tr.appendChild(td)
+          })
+          resultRows.appendChild(tr)
+        })
+      }
+
+      function startLoad(options) {
+        options = options || {}
+        var showAnnoyingModal = options.showAnnoyingModal === true
+
+        loadDataBtn.disabled = true
+        loadDataWithAnnoyingModalBtn.disabled = true
+        tableWrap.classList.add('hidden')
+        loadingRow.classList.add('hidden')
+        statusText.textContent = 'Calling service... preparing request.'
+
+        var showSpinnerAfterMs = 500 + Math.floor(Math.random() * 1501) // 500-2000
+        var spinnerVisibleForMs = 500 + Math.floor(Math.random() * 2501) // 500-3000
+
+        setTimeout(function () {
+          loadingRow.classList.remove('hidden')
+          statusText.textContent = 'Fetching latest campaign analytics...'
+          if (showAnnoyingModal && Math.random() < 0.5) {
+            annoyingOverlay.classList.remove('hidden')
+          }
+
+          setTimeout(function () {
+            renderRows(getMockRows())
+            loadingRow.classList.add('hidden')
+            tableWrap.classList.remove('hidden')
+            statusText.textContent = 'Data loaded successfully.'
+            loadDataBtn.disabled = false
+            loadDataWithAnnoyingModalBtn.disabled = false
+          }, spinnerVisibleForMs)
+        }, showSpinnerAfterMs)
+      }
+
+      loadDataBtn.addEventListener('click', function () {
+        startLoad({ showAnnoyingModal: false })
+      })
+
+      loadDataWithAnnoyingModalBtn.addEventListener('click', function () {
+        startLoad({ showAnnoyingModal: true })
+      })
+
+      closeAdBtn.addEventListener('click', function () {
+        adOverlay.classList.add('hidden')
+      })
+
+      closeAnnoyingBtn.addEventListener('click', function () {
+        annoyingOverlay.classList.add('hidden')
+      })
+
+      // 50% chance to show the advertisement modal at load.
+      if (Math.random() < 0.5) {
+        adOverlay.classList.remove('hidden')
+      }
+    })()
+  </script>
+</body>
+
+</html>
