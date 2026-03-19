@@ -9,6 +9,26 @@ cy.get('button').click()
 cy.get('.spinner').should('exist')
 ```
 
+## Use Cases
+
+- Validate transient UI feedback such as **spinners**, **toasts**, and **popup panels** that can appear/disappear too quickly for standard Cypress retries.
+- Assert save/submit actions trigger visible feedback (spinner, overlay, toast, popup panel) before UI becomes interactive again.
+- Reduce flaky tests in fast UIs where micro-loaders or notifications only exist for a few milliseconds.
+- Handle optional indicators safely (test passes whether they appear or not), including popup panels that may appear only in specific conditions.
+- Enforce that critical indicators appear and optionally disappear within expected timeout windows.
+- Verify an element remains visible long enough to be noticeable by users using `mustLast`.
+
+This is especially useful for popup panels that may or may not appear while a page is loading (for example, announcement, or contextual notice panels). With `appear: 'optional'`, you can keep one stable test flow across environments and user states without creating flaky failures when the panel legitimately does not show.
+
+### Examples
+
+- After clicking **Save Profile**, a spinner flashes for ~40ms; `clickAndWatchForElement` still detects it and avoids false negatives.
+- Clicking **Generate Report** shows an overlay while the export starts; the test confirms feedback appears before users can click again.
+- On page load, an **announcement popup panel** may appear for some users (or not appear at all); `watchForElement` with `appear: 'optional'` keeps the same test stable in both cases.
+- On **Delete Item**, a warning badge appears only when related records exist; `appear: 'optional'` lets one test cover both paths.
+- After **Pay Now**, a processing indicator must appear and then disappear; `appear: 'required'` + `disappear: true` enforces this.
+- During **2FA verification**, a security spinner must remain visible at least 800ms so users notice the transition; `mustLast: 800` validates that UX rule.
+
 ## Install
 
 ```bash
