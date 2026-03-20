@@ -330,7 +330,8 @@ Expected result:
 - **Passes** when the toast appears with the expected content and disappears within timeout.
 - **Fails** if the toast does not appear, does not match assertions, or does not disappear in time.
 
-## Examples
+
+## Other Examples
 
 ### Basic
 
@@ -427,7 +428,7 @@ cy.get('button').clickAndWatchForElement(
 )
 ```
 
-### With x/y coordinates
+### With x/y coordinates in a canvas
 
 ```js
 cy.get('canvas').clickAndWatchForElement(
@@ -453,6 +454,10 @@ The commands add Cypress log entries named `clickAndWatchForElement` or `watchFo
 - `selector observed`
 - `selector observed and disappeared`
 - `selector not observed (optional)`
+
+Example command log output:
+
+![Cypress command log showing "selector observed and disappeared"](assets/log-observed-dissapear.png)
 
 
 ## Run the package Cypress examples
