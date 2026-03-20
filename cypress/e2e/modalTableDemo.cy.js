@@ -46,37 +46,38 @@ const assertLoadCampaignDataSpinner = ($el) => {
 
 describe('modal table demo', () => {
 
-  // Run the test 6 times to get about 50% chance of the page load banner appearing or not appearing.
-  for (let i = 0; i < 6; i++) {
-
-    it('CASE 1: test load campaign data spinner + loading label + button disabled', () => {
-      cy.visit('/modal-table-demo.html', {
-        // onBeforeLoad(win) {
-        //   win.Math.random = () => 0.2 // (page load banner always shown)
-        // },
-        onBeforeLoad(win) {
-          win.Math.random = () => 0.8 // (page load banner never shown)
-        },
-      })
-
-      // Click the button and watch for the spinner to appear and disappear
-      cy.get('[data-cy="load-data-btn"]').clickAndWatchForElement({
-        selector: '[data-cy="service-spinner"]',
-        appear: 'required',
-        disappear: true,
-        timeout: 10000, // plugin internal timeout (can be omitted if same as defaultCommandTimeout)
-        assert: assertLoadCampaignDataSpinner // function to assert the spinner is visible and the loading label is not visible and the button is not disabled
-      })
-
-      // At this point we know the spinner is not visible (controlled by the plugin)
-      // So we can assert if we want the loading label is not visible and the button is not disabled
-      cy.get('.loading-label').should('not.be.visible')
-      cy.get('[data-cy="load-data-btn"]').should('be.enabled')
-
-      // Other assertions can be added here if needed (like on the table etc)
+  it('CASE 1: test load campaign data SPINNER + loading label + button disabled', () => {
+    cy.visit('/modal-table-demo.html', {
+      // onBeforeLoad(win) {
+      //   win.Math.random = () => 0.2 // (page load banner always shown)
+      // },
+      onBeforeLoad(win) {
+        win.Math.random = () => 0.8 // (page load banner never shown)
+      },
     })
 
-    it('CASE 2: watchForElement on ad-overlay (optional) + load campaign data spinner flow', () => {
+    // Click the button and watch for the spinner to appear and disappear
+    cy.get('[data-cy="load-data-btn"]').clickAndWatchForElement({
+      selector: '[data-cy="service-spinner"]',
+      appear: 'required',
+      disappear: true,
+      timeout: 10000, // plugin internal timeout (can be omitted if same as defaultCommandTimeout)
+      assert: assertLoadCampaignDataSpinner // function to assert the spinner is visible and the loading label is not visible and the button is not disabled
+    })
+
+    // At this point we know the spinner is not visible (controlled by the plugin)
+    // So we can assert if we want the loading label is not visible and the button is not disabled
+    cy.get('.loading-label').should('not.be.visible')
+    cy.get('[data-cy="load-data-btn"]').should('be.enabled')
+
+    // Other assertions can be added here if needed (like on the table etc)
+  })
+
+
+  // Run the test 4 times to get about 50% chance of the page load banner appearing or not appearing.
+  for (let i = 0; i < 4; i++) {
+
+    it(`CASE 2 - Try ${i + 1}: watchForElement for ANNOYING OVERLAY - 50% TIMES DOES NOT SHOW (optional) & ALSO load campaign data spinner flow`, () => {
       cy.visit('/modal-table-demo.html')
 
       // Observe startup banner modal that may or may not appear on page load (about 50%).

@@ -442,12 +442,12 @@
       <section class="panel-body" id="spinnerPlaygroundBody">
         <div class="controls-group">
           <div class="button-row">
-            <button id="spinnerBtn1">Spinner shows after 1000ms - removed after 1100ms</button>
-            <button id="spinnerBtn2">Spinner shows immediatelly - removed after 5500ms</button>
+            <button id="spinnerBtn1">Spinner shows after 1000ms - removed after 1500ms</button>
+            <button id="spinnerBtn2">Spinner shows immediatelly - removed after 2500ms</button>
             <button id="spinnerBtn3">Spinner shows after 500ms - hidden after 3500ms</button>
-            <button id="spinnerBtn4">Spinner shows immediatelly - hidden after 1500ms</button>
-            <button id="spinnerBtn5">Spinner shows INSIDE BUTTON inmediatelly - text restored after 1500ms</button>
-            <button id="spinnerBtn6">No spinner</button>
+            <!--<button id="spinnerBtn4">Spinner shows immediatelly - hidden after 1800ms</button>-->
+            <button id="spinnerBtn5">Spinner shows INSIDE BUTTON inmediatelly - text restored after 1800ms</button>
+            <!--<button id="spinnerBtn6">No spinner</button>-->
           </div>
 
           <div class="canvas-wrap">
@@ -473,7 +473,7 @@
       <section class="panel-body">
         <div class="controls-group">
           <div class="button-row">
-            <button id="toastBtn1">Toast shows after 1500ms - removed after 1000ms</button>
+            <button id="toastBtn1">Toast shows after 1800ms - removed after 1000ms</button>
             <button id="toastBtn2">Toast shows immediatelly - hidden after 3000ms</button>
             <button id="toastBtn3">No toast</button>
           </div>
@@ -736,14 +736,14 @@
       // SPINNERS EXAMPLES
       // ------------------------------------------------------------
 
-      // Spinner after 1000ms - removed after 1100ms
+      // Spinner after 1000ms - removed after 1500ms
       document.getElementById('spinnerBtn1').addEventListener('click', function () {
-        addSpinner('spinnerBtn1', 1100, 1000)
+        addSpinner('spinnerBtn1', 1500, 1000)
       })
 
       // Spinner immediatelly - removed after 6000ms
       document.getElementById('spinnerBtn2').addEventListener('click', function () {
-        addSpinner('spinnerBtn2', 5500)
+        addSpinner('spinnerBtn2', 2500)
       })
 
       // Spinner after 500ms - hidden after 3500ms
@@ -751,18 +751,18 @@
         addSpinner('spinnerBtn3', 3500, 500, true)
       })
 
-      // Spinner immediately - hidden after 1500ms
-      document.getElementById('spinnerBtn4').addEventListener('click', function () {
-        addSpinner('spinnerBtn4', 1500, 0, true)
-      })
+      // // Spinner immediately - hidden after 1800ms
+      // document.getElementById('spinnerBtn4').addEventListener('click', function () {
+      //   addSpinner('spinnerBtn4', 1800, 0, true)
+      // })
 
-      // Spinner inside button immediately - text restored after 1500ms.
+      // Spinner inside button immediately - text restored after 1800ms.
       document.getElementById('spinnerBtn5').addEventListener('click', function () {
         showInlineSpinnerInButton('spinnerBtn5', 1300, 0)
       })
 
-      // No spinner intentionally
-      document.getElementById('spinnerBtn6').addEventListener('click', function () { })
+      // // No spinner intentionally
+      // document.getElementById('spinnerBtn6').addEventListener('click', function () { })
 
       // Spinner shows immediatelly and then removed after 20ms
       document.getElementById('spinnerCanvas').addEventListener('click', function () {
@@ -772,12 +772,12 @@
       // TOASTS EXAMPLES
       // ------------------------------------------------------------
 
-      // Toast after 1500ms - removed after 1000ms
+      // Toast after 1800ms - removed after 1000ms
       document.getElementById('toastBtn1').addEventListener('click', function () {
-        addToast('toastBtn1', 'Toast after 1500ms - removed after 1000ms', 1000, 1500, false)
+        addToast('toastBtn1', 'Toast after 1800ms - removed after 1000ms', 1000, 1800, false)
       })
 
-      // Spinner immediately - hidden after 1500ms
+      // Spinner immediately - hidden after 1800ms
       document.getElementById('toastBtn2').addEventListener('click', function () {
         addToast('toastBtn2', 'Toast immediatelly - hidden after 3000ms', 3000, 0, true)
       })
