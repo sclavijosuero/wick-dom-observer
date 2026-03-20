@@ -96,7 +96,7 @@ describe('modal table demo', () => {
       // If it appeared, close it so the button can be clicked.
       cy.get('body').then(($body) => {
         const $overlay = $body.find('[data-cy="ad-overlay"]')
-        if ($overlay.is(':visible')) {
+        if ($overlay.length > 0 && $overlay.is(':visible')) {
           cy.get('[data-cy="close-ad-btn"]').click()
           cy.get('[data-cy="ad-overlay"]').should('not.be.visible')
         }

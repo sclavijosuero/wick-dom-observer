@@ -163,6 +163,45 @@ Expected result:
 - **Fails** only if spinner appears but does not satisfy `assert` before timeout.
 
 #### Example 3:
+Validate that a super-fast spinner is required to appear and then required to disappear, with multiple assertions, when clicking on a canvas at specific x, y coordinates:
+
+```js
+it('validates super-fast spinner after canvas click coordinates', () => {
+  cy.get('#spinnerCanvas').clickAndWatchForElement(
+    {
+      selector: '.spinner',
+      appear: 'required',
+      disappear: true,
+      timeout: 1200,
+      pollingInterval: 10,
+      assert: ($el) => {
+        expect($el).to.be.visible()
+        expect($el).to.have.length(1)
+        expect($el).to.have.class('spinner')
+        expect($el).to.have.class('loading')
+        expect($el).to.have.attr('data-from', 'spinnerCanvas')
+        expect($el.text()).to.eq('Loading')
+      },
+    },
+    20,
+    20
+  )
+})
+```
+
+What this full example does:
+
+- Clicks the canvas at coordinates `(20, 20)`.
+- Requires `.spinner` to appear (`appear: 'required'`).
+- Runs multiple assertions in `assert` to validate visibility, classes, source attribute, and text.
+- Waits for spinner disappearance because `disappear: true`.
+
+Expected result:
+
+- **Passes** when the fast spinner appears, satisfies all assertions, and disappears in time.
+- **Fails** if spinner never appears, does not match expected attributes/content, or does not disappear before timeout.
+
+#### Example 4:
 Watch an element that may appear on page load (no click action):
 
 ```js
@@ -181,6 +220,115 @@ it('observes startup banner if it appears', () => {
   })
 })
 ```
+
+What this full example does:
+
+- Visits `/modal-table-demo.html`.
+- Watches for `[data-cy="ad-overlay"]` without any click action.
+- Treats appearance as optional (`appear: 'optional'`), so the test supports both states.
+- If the element appears within timeout, it must be visible.
+
+Expected result:
+
+- **Passes** when the overlay appears and satisfies the visibility assertion.
+- **Also passes** when the overlay does not appear at all (valid optional behavior).
+- **Fails** only if the overlay appears but does not satisfy `assert` before timeout.
+
+
+
+#### Example 5:
+**Important flow:** handle optional page-load announcement overlay and still validate the required data-loading spinner happening in the background:
+
+```js
+it('handles optional startup overlay and validates load-data spinner flow', () => {
+  cy.visit('/modal-table-demo.html')
+
+  // Overlay appears only in some runs/users, so keep it optional.
+  cy.watchForElement({
+    selector: '[data-cy="ad-overlay"]',
+    appear: 'optional',
+    disappear: false,
+    timeout: 1500,
+    pollingInterval: 10,
+    assert: ($el) => {
+      expect($el).to.be.visible()
+      expect($el.find('[data-cy="close-ad-btn"]')).to.be.visible()
+    },
+  })
+
+  // If overlay exist and it is shown, close it to continue the normal flow.
+  cy.get('body').then(($body) => {
+    const $overlay = $body.find('[data-cy="ad-overlay"]')
+    if ($overlay.length > 0 && $overlay.is(':visible')) {
+      cy.get('[data-cy="close-ad-btn"]').click()
+      cy.get('[data-cy="ad-overlay"]').should('not.be.visible')
+    }
+  })
+
+  // Validate that the load-data spinner appears, matches UI expectations, and then disappears.
+  cy.get('[data-cy="load-data-btn"]').clickAndWatchForElement({
+    selector: '[data-cy="service-spinner"]',
+    appear: 'required',
+    disappear: true,
+    timeout: 10000,
+    assert: ($el) => {
+      expect($el).to.be.visible()
+      expect($el.closest('body').find('[data-cy="loading-row"] .loading-label')).to.be.visible()
+      expect($el.closest('body').find('[data-cy="load-data-btn"]').prop('disabled')).to.eq(true)
+    },
+  })
+
+  // Additional assertions on the page: After completion, verify loading UI is gone and the action button is enabled again.
+  cy.get('.loading-label').should('not.be.visible')
+  cy.get('[data-cy="load-data-btn"]').should('be.enabled')
+})
+```
+
+What this full example does:
+
+- Visits the page where the startup overlay may appear or not.
+- Uses `watchForElement` with `appear: 'optional'` to support both valid startup states.
+- Closes the overlay only when present and visible, then continues with the same test flow.
+- Validates the main load-data spinner as **required** and waits for disappearance.
+- Confirms post-load UI state (`.loading-label` hidden and button enabled).
+
+Expected result:
+
+- **Passes** when overlay appears and is handled, then spinner flow completes successfully.
+- **Also passes** when overlay does not appear and spinner flow still completes successfully.
+- **Fails** if optional overlay appears but is invalid, or if required spinner behavior/related assertions fail.
+
+#### Example 6:
+Require a toast to appear and disappear after a click:
+
+```js
+it('validates created toast appears and is removed', () => {
+  cy.get('#toastBtn1').clickAndWatchForElement({
+    selector: '.toast[data-from="toastBtn1"]',
+    appear: 'required',
+    disappear: true,
+    timeout: 4000,
+    pollingInterval: 10,
+    assert: ($el) => {
+      expect($el).to.be.visible()
+      expect($el).to.have.attr('data-from', 'toastBtn1')
+      expect($el.find('.toast-message').text()).to.contain('removed after 1000ms')
+    },
+  })
+})
+```
+
+What this full example does:
+
+- Clicks `#toastBtn1` to trigger a toast.
+- Requires the toast to appear (`appear: 'required'`).
+- Asserts visibility, source attribute, and expected message text.
+- Waits for disappearance because `disappear: true`.
+
+Expected result:
+
+- **Passes** when the toast appears with the expected content and disappears within timeout.
+- **Fails** if the toast does not appear, does not match assertions, or does not disappear in time.
 
 ## Examples
 
@@ -340,8 +488,8 @@ Useful when you only want to validate `clickAndWatchForElement()` behavior.
 
 ### 1.0.0
 
-- Initial release: `cy.clickAndWatchForElement()` custom command for Cypress. 
-- Supports detection of elements with mutation observer for reliability, with options for required/optional appearance, custom timeouts, polling interval, `mustLast`, disappearance, and optional click signatures (`clickAndWatchForElement`) or observer-only mode (`watchForElement`).
+- Initial release: `cy.clickAndWatchForElement()`, and `cy.watchForElement()` custom commands for Cypress. 
+- Supports detection of elements with `MutationObserver` for reliability, with options for required/optional appearance, custom timeouts, polling interval, `mustLast`, disappearance, and optional click signatures (`clickAndWatchForElement`) or observer-only mode (`watchForElement`).
 - Provides flexible config and assert callback for spinner validation.
 - Handles very short-lived spinners and prevents test flakiness due to rapid DOM changes.
 - Command log integration with meaningful messages on assertion/disappearance.
