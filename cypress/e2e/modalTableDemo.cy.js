@@ -91,14 +91,11 @@ describe('modal table demo', () => {
           expect($el).to.be.visible()
           expect($el.find('[data-cy="close-ad-btn"]')).to.be.visible()
         },
-      })
-
-      // If it appeared, close it so the button can be clicked.
-      cy.get('body').then(($body) => {
-        const $overlay = $body.find('[data-cy="ad-overlay"]')
-        if ($overlay.length > 0 && $overlay.is(':visible')) {
-          cy.get('[data-cy="close-ad-btn"]').click()
-          cy.get('[data-cy="ad-overlay"]').should('not.be.visible')
+        action: ($el) => {
+          // Close the overlay via DOM click and verify the same `$el` is no longer visible.
+          const closeBtnEl = $el.find('[data-cy="close-ad-btn"]')[0]
+          if (closeBtnEl) closeBtnEl.click()
+          expect($el).to.not.be.visible()
         }
       })
 

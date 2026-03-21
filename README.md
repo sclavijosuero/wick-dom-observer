@@ -68,17 +68,24 @@ The `config` argument is mandatory for both `clickAndWatchForElement` and `watch
 |------------|-----------|---------|-------------|
 | `selector` | **Yes**   | —       | CSS selector for the spinner element to poll for. Must be a non-empty string. |
 | `assert`   | **Yes**   | —       | **Synchronous callback** `($el) => { ... }` that runs when the spinner is found. Use it to assert on the element (e.g. visibility, class, text). |
+| `action`   | No        | —       | **Synchronous callback** `($el) => { ... }` executed **after `assert` passes**. Useful for side effects like clicking a close button. If `assert` is not executed, `action` is skipped. |
 | `timeout`  | No        | `Cypress.config('defaultCommandTimeout')` | Max time (ms) to wait for the spinner to appear or disappear. Must be ≥ 0. |
 | `appear`   | No        | `'optional'` | `'optional'` — spinner may or may not appear; `'required'` — command fails if the spinner does not appear and satisfy `assert` within `timeout`. |
 | `disappear`| No        | `false` | If `true`, after the spinner appears and passes `assert`, the command also waits for it to disappear within `timeout`. |
 | `pollingInterval` | No        | `10`    | Polling interval in ms (used for the disappear phase). Must be > 0. |
 | `mustLast` | No        | —       | When `appear` is `'required'`, minimum time (ms) the spinner must stay in the DOM. If it is removed before `mustLast` ms, the command fails with an error. Must be ≥ 0 when provided. |
 
-### Assert Callback Function
+### Assert and Action Callback Functions
 
 The `assert` callback must be synchronous.
 
-Do not use Cypress commands inside the `assert` callback (e.g., `cy.wrap()`, `cy.should()`); use `expect()` assertions only, plus plain JavaScript or jQuery logic.
+The `action` callback (when provided) must also be synchronous.
+
+Execution order is: `assert($el)` -> `action($el)`.
+
+If `assert` is not executed (for example when `appear: 'optional'` and the element never appears), `action` is skipped.
+
+Do not use Cypress commands inside `assert` or `action` (e.g., `cy.wrap()`, `cy.should()`); use `expect()` assertions plus plain JavaScript or **jQuery** logic.
 
 
 ### Relationship between `timeout` and Cypress default timeout
@@ -263,15 +270,12 @@ it('handles optional startup overlay and validates load-data spinner flow', () =
       expect($el).to.be.visible()
       expect($el.find('[data-cy="close-ad-btn"]')).to.be.visible()
     },
-  })
-
-  // If overlay exist and it is shown, close it to continue the normal flow.
-  cy.get('body').then(($body) => {
-    const $overlay = $body.find('[data-cy="ad-overlay"]')
-    if ($overlay.length > 0 && $overlay.is(':visible')) {
-      cy.get('[data-cy="close-ad-btn"]').click()
-      cy.get('[data-cy="ad-overlay"]').should('not.be.visible')
-    }
+    action: ($el) => {
+      // Close the overlay via DOM click and verify the same `$el` is no longer visible.
+      const closeBtnEl = $el.find('[data-cy="close-ad-btn"]')[0]
+      if (closeBtnEl) closeBtnEl.click()
+      expect($el).to.not.be.visible()
+    },
   })
 
   // Validate that the load-data spinner appears, matches UI expectations, and then disappears.
@@ -297,7 +301,7 @@ What this full example does:
 
 - Visits the page where the startup overlay may appear or not.
 - Uses `watchForElement` with `appear: 'optional'` to support both valid startup states.
-- Closes the overlay only when present and visible, then continues with the same test flow.
+- Uses `action` to close the overlay only when `assert` passes, then verifies the overlay is hidden.
 - Validates the main load-data spinner as **required** and waits for disappearance.
 - Confirms post-load UI state (`.loading-label` hidden and button enabled).
 
@@ -500,7 +504,7 @@ Useful when you only want to validate `clickAndWatchForElement()` behavior.
 
 ## Notes
 
-- This package is DOM-based and does not depend on intercepted network calls **(FINALLY!!!)**.
+- **This package detects elements directly from DOM changes and does not rely on `cy.intercept()` or network stubbing.** (Finally!)
 
 - Very small `pollingInterval` values can increase test overhead. `10ms` is supported, but you may prefer `20ms` or `25ms` in many suites.
 

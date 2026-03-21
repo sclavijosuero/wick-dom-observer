@@ -98,6 +98,7 @@ Cypress.Commands.add(
                 disappear,
                 mustLastOptions,
                 assert: config.assert,
+                action: config.action,
                 log,
             })
 
@@ -164,6 +165,7 @@ Cypress.Commands.add('watchForElement', (config) => {
             disappear,
             mustLastOptions,
             assert: config.assert,
+            action: config.action,
             log,
         })
 

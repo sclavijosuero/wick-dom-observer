@@ -125,6 +125,10 @@ export function validateSpinnerConfig(config) {
         throw new Error('clickAndWatchForElement(): config.assert must be a function.')
     }
 
+    if (config.action !== undefined && typeof config.action !== 'function') {
+        throw new Error('clickAndWatchForElement(): config.action must be a function when provided.')
+    }
+
     if (
         config.appear !== undefined &&
         config.appear !== 'optional' &&
@@ -240,7 +244,8 @@ export function waitForSpinnerAppearWithObserver(
     timeout,
     mustLastOptions,
     pollingInterval,
-    assert
+    assert,
+    action
 ) {
     return new Cypress.Promise((resolve, reject) => {
         let timeoutId
@@ -274,6 +279,16 @@ export function waitForSpinnerAppearWithObserver(
                 // Element exists but does not satisfy assertion yet.
                 // Keep waiting until it does or until timeout.
                 return
+            }
+
+            if (typeof action === 'function') {
+                try {
+                    action($el)
+                } catch (error) {
+                    cleanup()
+                    reject(error)
+                    return
+                }
             }
 
             cleanup()
@@ -351,6 +366,7 @@ export function runElementWatchFlow(options) {
         disappear,
         mustLastOptions,
         assert,
+        action,
         log,
     } = options
 
@@ -360,7 +376,8 @@ export function runElementWatchFlow(options) {
         timeout,
         mustLastOptions,
         pollingInterval,
-        assert
+        assert,
+        action
     )
 
     return appearPromise

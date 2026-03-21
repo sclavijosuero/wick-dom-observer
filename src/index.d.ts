@@ -7,6 +7,7 @@ declare global {
         interface ClickSpinnerConfig {
             selector: string
             assert: ($el: JQuery<HTMLElement>) => void
+            action?: ($el: JQuery<HTMLElement>) => void
             timeout?: number
             pollingInterval?: number
             appear?: ClickSpinnerAppearMode
@@ -31,6 +32,7 @@ declare global {
              * @param {Cypress.ClickSpinnerConfig} config - Spinner behavior configuration.
              *   - {string} selector: CSS selector used to find the spinner.
              *   - {Function} assert: Synchronous assertion callback executed when spinner is found.
+             *   - {Function} [action]: Synchronous callback executed after `assert` passes.
              *   - {number} [timeout]: Max wait time in ms for appear/disappear checks.
              *   - {number} [pollingInterval]: Polling interval in ms (used for disappear checks).
              *   - {'optional'|'required'} [appear='optional']:
