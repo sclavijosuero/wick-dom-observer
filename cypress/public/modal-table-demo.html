@@ -244,11 +244,6 @@
       box-shadow: 0 8px 18px rgba(22, 163, 74, 0.35);
     }
 
-    .close-modal.annoying-close {
-      background: linear-gradient(135deg, #dc2626, #f97316);
-      box-shadow: 0 8px 18px rgba(239, 68, 68, 0.35);
-    }
-
     /* Keep ad-overlay modal behavior, but style like a top banner. */
     #adOverlay {
       place-items: start center;
@@ -327,16 +322,13 @@
     <header class="header">
       <h1 class="title">Campaign Data Loader</h1>
       <p class="subtitle">
-        Click one button to load data. The second flow also triggers an annoying ad overlay.
+        Click the button to load data and validate the loading flow.
       </p>
     </header>
 
     <section class="content">
       <div class="toolbar">
         <button id="loadDataBtn" data-cy="load-data-btn" class="cta" type="button">Load Campaign Data Spinner</button>
-        <button id="loadDataWithAnnoyingModalBtn" data-cy="load-data-btn-annoying" class="cta" type="button">
-          Load Campaign Data Spinner &amp; Random Annoying Modal
-        </button>
         <p id="statusText" class="status">Ready to load data.</p>
       </div>
 
@@ -382,41 +374,15 @@
     </div>
   </div>
 
-  <div id="annoyingOverlay" data-cy="annoying-overlay" class="overlay hidden" role="dialog" aria-modal="true"
-    aria-labelledby="annoyingTitle">
-    <div class="modal">
-      <div class="modal-head">
-        <h2 id="annoyingTitle" class="modal-title">BUY NOW!!! Extremely Annoying Ad Modal</h2>
-      </div>
-      <div class="modal-body">
-        This is a simulated intrusive ad while data is loading.
-        <ul class="modal-list">
-          <li>Flash offer ends in 00:09</li>
-          <li>New popups every minute</li>
-          <li>Autoplay videos with loud sound</li>
-        </ul>
-        You must close this panel explicitly to interact with the table behind it.
-      </div>
-      <div class="modal-actions">
-        <button id="closeAnnoyingBtn" data-cy="close-annoying-btn" class="close-modal annoying-close" type="button">
-          Close Annoying Ad
-        </button>
-      </div>
-    </div>
-  </div>
-
   <script>
     (function () {
       var loadDataBtn = document.getElementById('loadDataBtn')
-      var loadDataWithAnnoyingModalBtn = document.getElementById('loadDataWithAnnoyingModalBtn')
       var statusText = document.getElementById('statusText')
       var loadingRow = document.getElementById('loadingRow')
       var tableWrap = document.getElementById('tableWrap')
       var resultRows = document.getElementById('resultRows')
       var adOverlay = document.getElementById('adOverlay')
       var closeAdBtn = document.getElementById('closeAdBtn')
-      var annoyingOverlay = document.getElementById('annoyingOverlay')
-      var closeAnnoyingBtn = document.getElementById('closeAnnoyingBtn')
 
       function getMockRows() {
         return [
@@ -446,12 +412,8 @@
         })
       }
 
-      function startLoad(options) {
-        options = options || {}
-        var showAnnoyingModal = options.showAnnoyingModal === true
-
+      function startLoad() {
         loadDataBtn.disabled = true
-        loadDataWithAnnoyingModalBtn.disabled = true
         tableWrap.classList.add('hidden')
         loadingRow.classList.add('hidden')
         statusText.textContent = 'Calling service... preparing request.'
@@ -462,9 +424,6 @@
         setTimeout(function () {
           loadingRow.classList.remove('hidden')
           statusText.textContent = 'Fetching latest campaign analytics...'
-          if (showAnnoyingModal && Math.random() < 0.5) {
-            annoyingOverlay.classList.remove('hidden')
-          }
 
           setTimeout(function () {
             renderRows(getMockRows())
@@ -472,25 +431,16 @@
             tableWrap.classList.remove('hidden')
             statusText.textContent = 'Data loaded successfully.'
             loadDataBtn.disabled = false
-            loadDataWithAnnoyingModalBtn.disabled = false
           }, spinnerVisibleForMs)
         }, showSpinnerAfterMs)
       }
 
       loadDataBtn.addEventListener('click', function () {
-        startLoad({ showAnnoyingModal: false })
-      })
-
-      loadDataWithAnnoyingModalBtn.addEventListener('click', function () {
-        startLoad({ showAnnoyingModal: true })
+        startLoad()
       })
 
       closeAdBtn.addEventListener('click', function () {
         adOverlay.classList.add('hidden')
-      })
-
-      closeAnnoyingBtn.addEventListener('click', function () {
-        annoyingOverlay.classList.add('hidden')
       })
 
       // 50% chance to show the advertisement modal at load.
