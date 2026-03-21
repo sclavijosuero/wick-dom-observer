@@ -74,6 +74,13 @@ The `config` argument is mandatory for both `clickAndWatchForElement` and `watch
 | `pollingInterval` | No        | `10`    | Polling interval in ms (used for the disappear phase). Must be > 0. |
 | `mustLast` | No        | —       | When `appear` is `'required'`, minimum time (ms) the spinner must stay in the DOM. If it is removed before `mustLast` ms, the command fails with an error. Must be ≥ 0 when provided. |
 
+### Assert Callback Function
+
+The `assert` callback must be synchronous.
+
+Do not use Cypress commands inside the `assert` callback (e.g., `cy.wrap()`, `cy.should()`); use `expect()` assertions only, plus plain JavaScript or jQuery logic.
+
+
 ### Relationship between `timeout` and Cypress default timeout
 
 - **Default behavior:** If `config.timeout` is omitted, both commands use Cypress `defaultCommandTimeout` for internal waits.
@@ -485,10 +492,23 @@ This starts the local static server and runs all Cypress specs in headless mode.
 ### Run only the spinner example spec
 
 ```bash
-npm run cypress:run -- --spec "cypress/e2e/clickSpinner.cy.js"
+npm run cy:run -- --spec "cypress/e2e/clickSpinner.cy.js"
 ```
 
 Useful when you only want to validate `clickAndWatchForElement()` behavior.
+
+
+## Notes
+
+- This package is DOM-based and does not depend on intercepted network calls **(FINALLY!!!)**.
+
+- Very small `pollingInterval` values can increase test overhead. `10ms` is supported, but you may prefer `20ms` or `25ms` in many suites.
+
+- If you use a custom `timeout` in config, ensure it is not greater than the Cypress command timeout for that chain, or the test will fail with a Cypress timeout before the command’s internal timeout is used (see [Relationship between `timeout` and Cypress default timeout](#relationship-between-timeout-and-cypress-default-timeout)).
+
+- **Fast spinners:** The command uses a `MutationObserver` to detect when the spinner element is added to the DOM, so very short-lived spinners (e.g. under 60ms) are still detected reliably. **You do not need to increase spinner duration or polling frequency to avoid flakiness.**
+
+- **`mustLast`:** The value is not exact; there is a margin of error (especially for small values like 10–20 ms or when `pollingInterval` is high). The parameter is meant to ensure the spinner is visible long enough to be noticed, not to measure duration precisely. See the note under [Require spinner to stay visible for a minimum time](#require-spinner-to-stay-visible-for-a-minimum-time).
 
 
 ## Changelog
@@ -502,21 +522,5 @@ Useful when you only want to validate `clickAndWatchForElement()` behavior.
 - Command log integration with meaningful messages on assertion/disappearance.
 - **Entirely DOM-based**: does not rely on intercepts, network stubbing, or external synchronization mechanisms.
 
-
-## Notes
-
-- The `assert` callback must be synchronous.
-
-- Do not put Cypress commands like `cy.wrap()` inside `assert` callback.
-
-- This package is DOM-based and does not depend on intercepted network calls **(FINALLY!!!)**.
-
-- Very small `pollingInterval` values can increase test overhead. `10ms` is supported, but you may prefer `20ms` or `25ms` in many suites.
-
-- If you use a custom `timeout` in config, ensure it is not greater than the Cypress command timeout for that chain, or the test will fail with a Cypress timeout before the command’s internal timeout is used (see [Relationship between `timeout` and Cypress default timeout](#relationship-between-timeout-and-cypress-default-timeout)).
-
-- **Fast spinners:** The command uses a `MutationObserver` to detect when the spinner element is added to the DOM, so very short-lived spinners (e.g. under 60ms) are still detected reliably. **You do not need to increase spinner duration or polling frequency to avoid flakiness.**
-
-- **`mustLast`:** The value is not exact; there is a margin of error (especially for small values like 10–20 ms or when `pollingInterval` is high). The parameter is meant to ensure the spinner is visible long enough to be noticed, not to measure duration precisely. See the note under [Require spinner to stay visible for a minimum time](#require-spinner-to-stay-visible-for-a-minimum-time).
 
 
