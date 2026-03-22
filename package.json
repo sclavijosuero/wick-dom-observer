@@ -1,18 +1,29 @@
 {
   "name": "wick-dom-observer",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Cypress plugin that watches DOM changes after clicks to detect fast loading spinners and async UI transitions. It improves test reliability by waiting for real visual completion instead of fixed delays or intercepts.",
   "main": "src/index.js",
   "types": "src/index.d.ts",
   "keywords": [
     "cypress",
+    "plugin",
     "spinner",
+    "toast",
+    "modal",
     "loading",
     "custom-command",
     "testing"
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sclavijosuero/wick-dom-observer.git"
+  },
+  "homepage": "https://github.com/sclavijosuero/wick-dom-observer#readme",
+  "bugs": {
+    "url": "https://github.com/sclavijosuero/wick-dom-observer/issues"
+  },
   "scripts": {
     "demo:serve": "serve cypress/public -p 3030",
     "cy:open": "start-server-and-test serve 3030 cypress:open",

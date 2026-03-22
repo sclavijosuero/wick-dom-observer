@@ -517,6 +517,10 @@ Useful when you only want to validate `clickAndWatchForElement()` behavior.
 
 ## Changelog
 
+### 1.0.2
+
+- Add missing 'repository' property in package.json
+
 ### 1.0.1
 
 - Fix paths to image assets in readme.md
