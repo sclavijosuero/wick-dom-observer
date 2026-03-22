@@ -2,7 +2,7 @@
 
 This plugin adds two Cypress commands to reliably detect UI elements that may appear/disappear quickly: `clickAndWatchForElement` (click + observe) and `watchForElement` (observe only). It supports required/optional appearance, optional disappearance checks, custom timeout/polling, and minimum visible duration (`mustLast`) with a synchronous assertion callback.
 
-![wick-dom-observer overview](assets/overview.png)
+![wick-dom-observer overview](/assets/overview.png)
 
 This is useful when, for example, a spinner may appear and disappear too quickly for a normal Cypress assertion like:
 
@@ -102,7 +102,7 @@ Do not use Cypress commands inside `assert` or `action` (e.g., `cy.wrap()`, `cy.
 
 #### Timeline view
 
-![clickAndWatchForElement timeout timeline](assets/timelines.png)
+![clickAndWatchForElement timeout timeline](/assets/timelines.png)
 
 The timeline above maps how timeout values are consumed during the command flow:
 
@@ -470,7 +470,7 @@ The commands add Cypress log entries named `clickAndWatchForElement` or `watchFo
 
 Example command log output:
 
-![Cypress command log showing "selector observed and disappeared"](assets/log-observed-dissapear.png)
+![Cypress command log showing "selector observed and disappeared"](/assets/log-observed-dissapear.png)
 
 
 ## Run the package Cypress examples
@@ -516,6 +516,10 @@ Useful when you only want to validate `clickAndWatchForElement()` behavior.
 
 
 ## Changelog
+
+### 1.0.1
+
+- Fix paths to image assets in readme.md
 
 ### 1.0.0
 
