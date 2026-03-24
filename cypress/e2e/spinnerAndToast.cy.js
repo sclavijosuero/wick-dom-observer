@@ -1,38 +1,39 @@
 /* Example specs for wick-dom-observer */
 
-describe('clickSpinner examples', () => {
-  beforeEach(() => {
-    cy.visit('/demo.html')
-  })
+beforeEach(() => {
+  cy.visit('/demo.html')
+})
 
-  // SPINNERS EXAMPLES
-  // ------------------------------------------------------------
+// *** spinnerBtn1 ***
+context('🧭 spinnerBtn1: spinner appears after 1000ms and is REMOVED 1500ms later', () => {
 
-  it('config only', () => {
+  it('works with config only', () => {
     cy.get('#spinnerBtn1').clickAndWatchForElement({
-      selector: '.spinner',
+      selector: '.spinner[data-from="spinnerBtn1"]',
       assert: ($el) => {
         expect($el).to.be.visible()
       },
     })
   })
 
-  it('config + mustLast 2000ms', () => {
+  it('works with mustLast + disappearance', () => {
     cy.get('#spinnerBtn1').clickAndWatchForElement({
-      selector: '.spinner',
+      selector: '.spinner[data-from="spinnerBtn1"]',
       appear: 'required',
       disappear: true,
-      mustLast: 2000,
+      mustLast: 1000,
+      timeout: 4000,
       assert: ($el) => {
         expect($el).to.be.visible()
+        expect($el).to.have.class('loading')
       },
     })
   })
 
-  it('config + options ({ force: true })', () => {
+  it('supports click options', () => {
     cy.get('#spinnerBtn1').clickAndWatchForElement(
       {
-        selector: '.spinner',
+        selector: '.spinner[data-from="spinnerBtn1"]',
         assert: ($el) => {
           expect($el).to.have.class('loading')
         },
@@ -41,12 +42,13 @@ describe('clickSpinner examples', () => {
     )
   })
 
-  it('config + position (position "left")', () => {
+  it('supports click position argument', () => {
     cy.get('#spinnerBtn1').clickAndWatchForElement(
       {
-        selector: '.spinner',
+        selector: '.spinner[data-from="spinnerBtn1"]',
         appear: 'required',
         disappear: true,
+        timeout: 4000,
         assert: ($el) => {
           expect($el.text()).to.contain('Loading')
         },
@@ -55,10 +57,10 @@ describe('clickSpinner examples', () => {
     )
   })
 
-  it('config + position + options (position "topRight" and { force: true })', () => {
+  it('supports click position + options arguments', () => {
     cy.get('#spinnerBtn1').clickAndWatchForElement(
       {
-        selector: '.spinner',
+        selector: '.spinner[data-from="spinnerBtn1"]',
         assert: ($el) => {
           expect($el).to.be.visible()
         },
@@ -67,46 +69,16 @@ describe('clickSpinner examples', () => {
       { force: true }
     )
   })
+})
 
-  it.only('required spinner + disappearance', { defaultCommandTimeout: 3500 }, () => {
+// *** spinnerBtn2 ***
+context('🧭 spinnerBtn2: overlay spinner appears immediately and is REMOVED after 2500ms', () => {
 
-    cy.get('#spinnerBtn1').clickAndWatchForElement({
-      selector: '.spinner',
-      appear: 'required',
-      disappear: true,
-      timeout: 3000,
-      // timeout: 4000,
-      pollingInterval: 10,
-      assert: ($el) => {
-        expect($el).to.be.visible()
-        expect($el).to.have.class('loading')
-      },
-    })
-  })
-
-  it.only('required spinner + mustLast + disappearance (THIS TEST WILL FAIL - timeout set to 3000ms is too short)', { defaultCommandTimeout: 10000 }, () => {
+  it('passes with required + mustLast + disappearance', { defaultCommandTimeout: 10000 }, () => {
     cy.get('#spinnerBtn2').clickAndWatchForElement({
-      selector: '.spinner',
-
-      appear: 'required',
-      mustLast: 3000,
-      disappear: true,
-      timeout: 5000, // All spinner-related actions (appear/disappear/mustLast) are restricted by this timeout: if the spinner takes longer than 3000ms to appear, disappear, or complete its required duration, the test will fail.
-      pollingInterval: 10,
-      assert: ($el) => {
-        expect($el).to.be.visible()
-        expect($el.text()).to.eq('Loading')
-      },
-    })
-  })
-
-  it('required spinner with mustLast and disappearance', { defaultCommandTimeout: 10000 }, () => {
-    cy.get('#spinnerBtn2').clickAndWatchForElement({
-      selector: '.spinner',
-
+      selector: '.spinner[data-from="spinnerBtn2"]',
       appear: 'required',
       mustLast: 1000,
-
       disappear: true,
       timeout: 10000,
       pollingInterval: 10,
@@ -119,12 +91,12 @@ describe('clickSpinner examples', () => {
     })
   })
 
-  it('optional spinner without disappearance check', { defaultCommandTimeout: 10000 }, () => {
+  it('passes with optional appearance and no disappearance wait', { defaultCommandTimeout: 10000 }, () => {
     cy.get('#spinnerBtn2').clickAndWatchForElement({
-      selector: '.spinner',
+      selector: '.spinner[data-from="spinnerBtn2"]',
       timeout: 10000,
       pollingInterval: 10,
-      appear: 'optional', // or 'required'
+      appear: 'optional',
       disappear: false,
       assert: ($el) => {
         expect($el).to.be.visible()
@@ -135,7 +107,28 @@ describe('clickSpinner examples', () => {
     })
   })
 
-  it.only('required spinner + disappearance', () => {
+  it('⚠️ EXPECTED TO FAIL: mustLast 3000ms exceeds spinner lifetime (~2500ms)', { defaultCommandTimeout: 10000 }, () => {
+    cy.get('#spinnerBtn2').clickAndWatchForElement({
+      selector: '.spinner[data-from="spinnerBtn2"]',
+      appear: 'required',
+      mustLast: 3000,
+      disappear: true,
+      timeout: 8000,
+      pollingInterval: 10,
+      assert: ($el) => {
+        expect($el).to.be.visible()
+        expect($el).to.have.attr('data-from', 'spinnerBtn2')
+      },
+    })
+    // EXPECTED FAILURE:
+    // spinnerBtn2 is removed after ~2500ms, so it cannot satisfy mustLast: 3000ms.
+  })
+})
+
+// *** spinnerBtn3 ***
+context('🧭 spinnerBtn3: persistent spinner appears after 500ms and is HIDDEN after 3500ms', () => {
+
+  it('passes with required appearance + disappearance', () => {
     cy.get('#spinnerBtn3').clickAndWatchForElement({
       selector: '.spinner[data-from="spinnerBtn3"]',
       appear: 'required',
@@ -148,12 +141,16 @@ describe('clickSpinner examples', () => {
       },
     })
   })
+})
 
-  it('required spinner for spinnerBtn4 without disappearance', () => {
+// *** spinnerBtn4 ***
+context('🧭 spinnerBtn4: persistent spinner appears immediately and is HIDDEN after 1800ms', () => {
+
+  it('passes with required appearance + disappearance', () => {
     cy.get('#spinnerBtn4').clickAndWatchForElement({
       selector: '.spinner[data-from="spinnerBtn4"]',
       appear: 'required',
-      disappear: false,
+      disappear: true,
       timeout: 2500,
       pollingInterval: 10,
       assert: ($el) => {
@@ -163,10 +160,14 @@ describe('clickSpinner examples', () => {
       },
     })
   })
+})
 
-  it.only('required spinner INSIDE button + musat last 800ms', () => {
+// *** spinnerBtn5 ***
+context('🧭 spinnerBtn5: inline spinner appears immediately and is REMOVED after about 1300ms', () => {
+
+  it('passes with required appearance + mustLast + disappearance', () => {
     cy.get('#spinnerBtn5').clickAndWatchForElement({
-      selector: '.button-inline-spinner',
+      selector: '.button-inline-spinner[data-from="spinnerBtn5"]',
       appear: 'required',
       mustLast: 800,
       timeout: 2500,
@@ -179,9 +180,9 @@ describe('clickSpinner examples', () => {
     })
   })
 
-  it('optional spinner INSIDE button', () => {
+  it('passes with optional appearance + disappearance', () => {
     cy.get('#spinnerBtn5').clickAndWatchForElement({
-      selector: '.button-inline-spinner',
+      selector: '.button-inline-spinner[data-from="spinnerBtn5"]',
       appear: 'optional',
       disappear: true,
       timeout: 3000,
@@ -192,8 +193,12 @@ describe('clickSpinner examples', () => {
       },
     })
   })
+})
 
-  it('no spinner appears (optional + no disappearance)', () => {
+// *** spinnerBtn6 ***
+context('🧭 spinnerBtn6: no spinner should appear', () => {
+
+  it('passes with optional appearance and no disappearance wait', () => {
     cy.get('#spinnerBtn6').clickAndWatchForElement({
       selector: '.spinner[data-from="spinnerBtn6"]',
       appear: 'optional',
@@ -205,14 +210,18 @@ describe('clickSpinner examples', () => {
       },
     })
   })
+})
 
-  it.only('required spinner Superfast but will still pass (config + x + y)', () => {
+
+// *** spinnerCanvas ***
+context('🧭 spinnerCanvas: canvas-triggered spinner appears immediately and is REMOVED after about 20ms', () => {
+
+  it('detects a very short-lived spinner using x/y click coordinates', () => {
     cy.get('#spinnerCanvas').clickAndWatchForElement(
       {
-        selector: '.spinner',
+        selector: '.spinner[data-from="spinnerCanvas"]',
         appear: 'required',
         disappear: true,
-        // mustLast: 30,
         assert: ($el) => {
           expect($el).to.be.visible()
           expect($el).to.have.length(1)
@@ -229,11 +238,13 @@ describe('clickSpinner examples', () => {
       20
     )
   })
+})
 
-  // TOASTS EXAMPLES
-  // ------------------------------------------------------------
 
-  it.only('toast required + disappearance (created/removed toast)', () => {
+// *** toastBtn1 ***
+context('🍞 toastBtn1: toast appears after 1800ms and is REMOVED after 1000ms', () => {
+
+  it('passes with required appearance + disappearance', () => {
     cy.get('#toastBtn1').clickAndWatchForElement({
       selector: '.toast[data-from="toastBtn1"]',
       appear: 'required',
@@ -247,8 +258,13 @@ describe('clickSpinner examples', () => {
       },
     })
   })
+})
 
-  it.only('toast required + no disappearance check (persistent hidden toast)', () => {
+
+// *** toastBtn2 ***
+context('🍞 toastBtn2: persistent toast appears immediately and is HIDDEN after 3000ms', () => {
+
+  it('passes with required appearance and no disappearance wait', () => {
     cy.get('#toastBtn2').clickAndWatchForElement({
       selector: '.toast[data-from="toastBtn2"]',
       appear: 'required',
@@ -262,8 +278,13 @@ describe('clickSpinner examples', () => {
       },
     })
   })
+})
 
-  it.only('no toast appears (optional + no disappearance)', () => {
+
+// *** toastBtn3 ***
+context('🍞 toastBtn3: no toast should appear', () => {
+
+  it('passes with optional appearance and no disappearance wait', () => {
     cy.get('#toastBtn3').clickAndWatchForElement({
       selector: '.toast[data-from="toastBtn3"]',
       appear: 'optional',
@@ -275,39 +296,50 @@ describe('clickSpinner examples', () => {
       },
     })
   })
-
-  it.only('toast equired + disappearance - super fast toast (but will still pass)', () => {
-    cy.get('#toastCanvas').clickAndWatchForElement({
-      selector: '.toast[data-from="toastCanvas"]',
-      appear: 'required',
-      disappear: true,
-      timeout: 300,
-      pollingInterval: 10,
-      assert: ($el) => {
-        expect($el).to.be.visible()
-        expect($el).to.have.attr('data-from', 'toastCanvas')
-      },
-    }, 40, 40)
-  })
-
-
-  it('toast required + disappearance - super fast toast (THIS TEST WILL FAIL - timeout is too short)', () => {
-    cy.get('#toastCanvas').clickAndWatchForElement({
-      selector: '.toast[data-from="toastCanvas"]',
-      appear: 'required',
-      disappear: true,
-      timeout: 180, // Note something: Since this is a toast that has an animation when retracting,
-      // we need to wait for the animation to complete, even when in the DOM element is hidden after 110ms
-      pollingInterval: 10,
-      assert: ($el) => {
-        expect($el).to.be.visible()
-        expect($el).to.have.attr('data-from', 'toastCanvas')
-      },
-    }, 40, 40)
-  })
-
 })
 
 
-// Seems the bottom is spinner THAT SHOW FOR >= 60 milliseconds
+// *** toastCanvas ***
+context('🍞 toastCanvas: canvas-triggered persistent toast appears after ~30ms and is HIDDEN after ~110ms (+close animation, timeout 300ms is enough for the hide/animation cycle)', () => {
+
+  it('passes when timeout is long enough for hide/animation completion', () => {
+    cy.get('#toastCanvas').clickAndWatchForElement(
+      {
+        selector: '.toast[data-from="toastCanvas"]',
+        appear: 'required',
+        disappear: true,
+        timeout: 300, //enough for the hide/animation cycle
+        pollingInterval: 10,
+        assert: ($el) => {
+          expect($el).to.be.visible()
+          expect($el).to.have.attr('data-from', 'toastCanvas')
+        },
+      },
+      40,
+      40
+    )
+  })
+
+  it('⚠️ EXPECTED TO FAIL: canvas-triggered persistent toast appears after ~30ms and is HIDDEN after ~110ms (+close animation), but timeout 140ms is too short for the full hide/animation cycle', () => {
+    cy.get('#toastCanvas').clickAndWatchForElement(
+      {
+        selector: '.toast[data-from="toastCanvas"]',
+        appear: 'required',
+        disappear: true,
+        timeout: 140,
+        pollingInterval: 10,
+        assert: ($el) => {
+          expect($el).to.be.visible()
+          expect($el).to.have.attr('data-from', 'toastCanvas')
+        },
+      },
+      40,
+      40
+    )
+    // EXPECTED FAILURE:
+    // toastCanvas appears after ~30ms, then dismiss/hide includes timing + close animation,
+    // so timeout: 140ms is intentionally too short for disappear: true.
+  })
+})
+
 

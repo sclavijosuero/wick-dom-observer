@@ -445,9 +445,9 @@
             <button id="spinnerBtn1">Spinner shows after 1000ms - removed after 1500ms</button>
             <button id="spinnerBtn2">Spinner shows immediatelly - removed after 2500ms</button>
             <button id="spinnerBtn3">Spinner shows after 500ms - hidden after 3500ms</button>
-            <!--<button id="spinnerBtn4">Spinner shows immediatelly - hidden after 1800ms</button>-->
+            <button id="spinnerBtn4">Spinner shows immediatelly - hidden after 1800ms</button>
             <button id="spinnerBtn5">Spinner shows INSIDE BUTTON inmediatelly - text restored after 1800ms</button>
-            <!--<button id="spinnerBtn6">No spinner</button>-->
+            <button id="spinnerBtn6">No spinner</button>
           </div>
 
           <div class="canvas-wrap">
@@ -751,18 +751,18 @@
         addSpinner('spinnerBtn3', 3500, 500, true)
       })
 
-      // // Spinner immediately - hidden after 1800ms
-      // document.getElementById('spinnerBtn4').addEventListener('click', function () {
-      //   addSpinner('spinnerBtn4', 1800, 0, true)
-      // })
+      // Spinner immediately - hidden after 1800ms
+      document.getElementById('spinnerBtn4').addEventListener('click', function () {
+        addSpinner('spinnerBtn4', 1800, 0, true)
+      })
 
       // Spinner inside button immediately - text restored after 1800ms.
       document.getElementById('spinnerBtn5').addEventListener('click', function () {
         showInlineSpinnerInButton('spinnerBtn5', 1300, 0)
       })
 
-      // // No spinner intentionally
-      // document.getElementById('spinnerBtn6').addEventListener('click', function () { })
+      // No spinner intentionally
+      document.getElementById('spinnerBtn6').addEventListener('click', function () { })
 
       // Spinner shows immediatelly and then removed after 20ms
       document.getElementById('spinnerCanvas').addEventListener('click', function () {

@@ -2,7 +2,7 @@
 
 This plugin adds two Cypress commands to reliably detect UI elements that may appear/disappear quickly: `clickAndWatchForElement` (click + observe) and `watchForElement` (observe only). It supports required/optional appearance, optional disappearance checks, custom timeout/polling, and minimum visible duration (`mustLast`) with a synchronous assertion callback.
 
-![wick-dom-observer overview](/assets/overview.png)
+![wick-dom-observer overview](/assets/images/overview.png)
 
 This is useful when, for example, a spinner may appear and disappear too quickly for a normal Cypress assertion like:
 
@@ -90,19 +90,19 @@ Do not use Cypress commands inside `assert` or `action` (e.g., `cy.wrap()`, `cy.
 
 ### Relationship between `timeout` and Cypress default timeout
 
-- **Default behavior:** If `config.timeout` is omitted, both commands use Cypress `defaultCommandTimeout` for internal waits.
+- **Default behavior:** If `config.timeout` is omitted, both commands (`clickAndWatchForElement` and `watchForElement`) use Cypress `defaultCommandTimeout` for internal waits.
 - **Plugin timeout scope:** `config.timeout` controls the command's internal appear/disappear wait windows.
-- **Cypress chain scope:** Cypress still enforces command-chain timeout limits for both:
-  - `cy.get(...).clickAndWatchForElement(...)`
-  - `cy.watchForElement(...)`
 
-> ⚠️ **Important (`clickAndWatchForElement`)**: setting `{ timeout: ... }` only on the parent `cy.get(...)` does **not** extend the full command flow.
->
-> ⚠️ **Important (`watchForElement`)**: there is no parent `cy.get(...)`; the command chain timeout is determined by Cypress command timeout rules and the command's own `config.timeout`.
+- **If you use a custom `timeout` in config, ensure it is not greater than the Cypress command timeout for that chain**, or the test will fail with a Cypress timeout before the command’s internal timeout is used.
+
+
+> ⚠️ **Important**
+>  - For `clickAndWatchForElement`: setting `{ timeout: ... }` only on the parent `cy.get(...)` does **not** extend the full command flow.
+>  - For `watchForElement`: there is no parent `cy.get(...)`.
 
 #### Timeline view
 
-![clickAndWatchForElement timeout timeline](/assets/timelines.png)
+![clickAndWatchForElement timeout timeline](/assets/images/timelines.png)
 
 The timeline above maps how timeout values are consumed during the command flow:
 
@@ -114,7 +114,7 @@ The timeline above maps how timeout values are consumed during the command flow:
 
 For `watchForElement(...)`, steps are the same except there is no click step (it starts observing immediately).
 
-Practical rule: keep `defaultCommandTimeout` high enough for the full command chain, and use `config.timeout` to tune element-watch behavior.
+**Practical rule:** keep `defaultCommandTimeout` high enough to avoid Cypress timing out first, because `config.timeout` (defined in these commands) is effectively capped by the command-chain timeout. Then use `config.timeout` to tune element-watch behavior within that limit.
 
 
 > ⚠️ **Recommended setup for longer waits:** set `defaultCommandTimeout` at test (or suite) level for slow spinners/elements testing.
@@ -470,12 +470,20 @@ The commands add Cypress log entries named `clickAndWatchForElement` or `watchFo
 
 Example command log output:
 
-![Cypress command log showing "selector observed and disappeared"](/assets/log-observed-dissapear.png)
+![Cypress command log showing "selector observed and disappeared"](/assets/images/log-observed-dissapear.png)
 
 
 ## Run the package Cypress examples
 
-This repo includes example tests for the command in `cypress/e2e/clickSpinner.cy.js`, using the demo page `cypress/public/demo.html`.
+This repo includes two example specs:
+
+- `cypress/e2e/clickSpinner.cy.js` (uses `assets/public/demo.html`)
+- `cypress/e2e/modalTableDemo.cy.js` (uses `assets/public/modal-table-demo.html`)
+
+All commands in this section start a local static server on port `3030`, serving `assets/public` at `http://localhost:3030` so both demo pages are available:
+
+- `http://localhost:3030/demo.html`
+- `http://localhost:3030/modal-table-demo.html`
 
 ### Open Cypress UI (interactive)
 
@@ -502,11 +510,51 @@ npm run cy:run -- --spec "cypress/e2e/clickSpinner.cy.js"
 Useful when you only want to validate `clickAndWatchForElement()` behavior.
 
 
+
+## Why this package uses both `MutationObserver` and Polling approach
+
+This package uses a hybrid strategy on purpose:
+
+- `MutationObserver` catches very fast DOM insertions/removals (the exact moment an element is added or removed).
+- Polling checks time-based and state-based conditions over time (for example, `disappear`, `mustLast`, and repeated assertion checks).
+
+### Why polling alone is not enough
+
+Polling checks the DOM every `N` milliseconds. If an element appears and disappears between two checks, polling can miss it completely.
+
+Practical examples:
+
+- A **spinner appears for 20-30ms after a cached API response**. With polling at 50ms, the spinner may never be seen.
+- A toast is added and auto-removed quickly by animation timers; an interval check can skip over the full lifecycle.
+- A modal overlay flashes only on specific CPU/network timing; fixed polling cadence can be flaky across machines and CI.
+
+Result: tests can fail randomly with "element not observed" even though the user actually saw feedback.
+
+### Why `MutationObserver` alone is not enough
+
+`MutationObserver` is event-based and excellent for "it was added/removed", but by itself it does not provide stable timing loops for all validation needs.
+
+Practical examples:
+
+- You need to ensure a spinner stays visible for at least `mustLast` milliseconds. Detecting insertion once is not enough; you must keep checking duration/state.
+- You need to wait until an observed element disappears (`disappear: true`) within timeout, including cases where it becomes hidden but stays in the DOM (for example `display: none`, `visibility: hidden`, or hidden via class changes). This requires ongoing checks and timeout control.
+- You may need repeated validation while the element exists (for example, still visible, still attached, still matching expected state).
+
+Result: observer-only logic detects events well, but is weaker for duration guarantees and timeout-driven waiting behavior.
+
+### Why the hybrid approach is more reliable
+
+Combining both gives the best of each:
+
+- `MutationObserver` catches short-lived DOM events that polling could miss.
+- Polling provides deterministic, timeout-bounded checks for disappearance and minimum-duration requirements.
+- Together they reduce flakiness in local and CI runs, especially for ultra-fast spinners, toasts, and transient overlays.
+
 ## Notes
 
 - **This package detects elements directly from DOM changes and does not rely on `cy.intercept()` or network stubbing.** (Finally!)
 
-- Very small `pollingInterval` values can increase test overhead. `10ms` is supported, but you may prefer `20ms` or `25ms` in many suites.
+- Very small `pollingInterval` values can increase test overhead. The default is `10ms`, but in some suites `20ms` or `25ms` provides a better balance between reliability and performance.
 
 - If you use a custom `timeout` in config, ensure it is not greater than the Cypress command timeout for that chain, or the test will fail with a Cypress timeout before the command’s internal timeout is used (see [Relationship between `timeout` and Cypress default timeout](#relationship-between-timeout-and-cypress-default-timeout)).
 
@@ -516,6 +564,12 @@ Useful when you only want to validate `clickAndWatchForElement()` behavior.
 
 
 ## Changelog
+
+### 1.0.3
+
+- Improved documentation in README.md
+- Sample web pages moved into folder assets
+- Test in file spinnerAndToast.cy.js grouped by spinner button and toast button
 
 ### 1.0.2
 
