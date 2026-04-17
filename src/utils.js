@@ -251,6 +251,7 @@ export function waitForSpinnerAppearWithObserver(
         let timeoutId
         let pollId
         let settled = false
+        let sawVisibleMatchingElement = false
 
         function cleanup() {
             settled = true
@@ -274,6 +275,9 @@ export function waitForSpinnerAppearWithObserver(
             if (!result) return
 
             const { el, $el } = result
+            if (Cypress.dom.isVisible(el)) {
+                sawVisibleMatchingElement = true
+            }
 
             if (!doesAssertionPass(assert, $el)) {
                 // Element exists but does not satisfy assertion yet.
@@ -337,11 +341,20 @@ export function waitForSpinnerAppearWithObserver(
 
         timeoutId = win.setTimeout(() => {
             cleanup()
-            reject(
-                new Error(
-                    `clickAndWatchForElement(): spinner "${selector}" did not appear within ${timeout}ms.`
+            if (sawVisibleMatchingElement) {
+                const assertionError = new Error(
+                    `clickAndWatchForElement(): spinner "${selector}" was observed but did not satisfy assertions within ${timeout}ms.`
                 )
+                assertionError.watchFailureType = 'assertionNotSatisfied'
+                reject(assertionError)
+                return
+            }
+
+            const notObservedError = new Error(
+                `clickAndWatchForElement(): spinner "${selector}" did not appear within ${timeout}ms.`
             )
+            notObservedError.watchFailureType = 'notObserved'
+            reject(notObservedError)
         }, timeout)
     })
 }
@@ -382,7 +395,7 @@ export function runElementWatchFlow(options) {
 
     return appearPromise
         .catch((error) => {
-            if (appear === 'optional') {
+            if (appear === 'optional' && error.watchFailureType === 'notObserved') {
                 if (log) {
                     log.set({
                         message: `${selector} not observed (optional)`,

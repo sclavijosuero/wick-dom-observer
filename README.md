@@ -87,6 +87,10 @@ If `assert` is not executed (for example when `appear: 'optional'` and the eleme
 
 Do not use Cypress commands inside `assert` or `action` (e.g., `cy.wrap()`, `cy.should()`); use `expect()` assertions plus plain JavaScript or **jQuery** logic.
 
+> ℹ️ **Visibility timing tip:** with animated/transitional UI, a parent container can become visible before its children are fully visible. A negative visibility assertion on a child (for example `expect($el.find(...)).not.to.be.visible()`) may pass briefly during that transition. Prefer stable assertions tied to your intent (for example, `.to.be.visible()` when validating final rendered state, or structural checks like `.to.have.length(...)` when forcing deterministic failures).
+
+> ℹ️ **After-click timing tip (QA):** if `action` clicks a close/continue button using native DOM click (`element.click()`), app frameworks (like React/Vue/Angular) may hide/remove the modal asynchronously in the next render cycle. So `expect($el).to.not.be.visible()` right after the click can fail even when the modal will close milliseconds later. Prefer asserting the post-close state with a normal Cypress step after the command (for example `cy.get(modalSelector).should('not.be.visible')` or `should('not.exist')` depending on app behavior).
+
 
 ### Relationship between `timeout` and Cypress default timeout
 
@@ -274,7 +278,6 @@ it('handles optional startup overlay and validates load-data spinner flow', () =
       // Close the overlay via DOM click and verify the same `$el` is no longer visible.
       const closeBtnEl = $el.find('[data-cy="close-ad-btn"]')[0]
       if (closeBtnEl) closeBtnEl.click()
-      expect($el).to.not.be.visible()
     },
   })
 
@@ -564,6 +567,10 @@ Combining both gives the best of each:
 
 
 ## Changelog
+
+### 1.0.4
+
+- Fix optional appearance flow: now `appear: 'optional'` only passes when the element is not observed; if observed but assertions never pass, the command fails correctly.
 
 ### 1.0.3
 
